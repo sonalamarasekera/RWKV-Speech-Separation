@@ -18,14 +18,32 @@ import yaml
 
 from rwkv_ss.models.registry import build_model
 from rwkv_ss.transforms.stft import STFTProcessor
-from rwkv_ss.data.datamodule import Libri2MixDataModule
+from rwkv_ss.data.datamodule import Libri2MixDataModule, DataConfig
 from rwkv_ss.training.trainer import Trainer
+from rwkv_ss.utils.config import resolve_and_validate
+from rwkv_ss.utils.seed import set_seed
+from rwkv_ss.utils.device import resolve_device
 
 
 def _run_with_cfg(cfg: Dict[str, Any]):
+    # Ensure dict (in case Hydra passes DictConfig)
+    if not isinstance(cfg, dict):
+        try:
+            from omegaconf import OmegaConf
+
+            cfg = OmegaConf.to_container(cfg, resolve=True)
+        except Exception:
+            cfg = dict(cfg)
+
+    cfg = resolve_and_validate(cfg)
+
+    # seed + device
+    seed = cfg.get("data", {}).get("subset_seed", 42)
+    set_seed(int(seed))
+
     # Build datamodule
     data_cfg = cfg.get("data", {})
-    dm = Libri2MixDataModule(data_cfg)
+    dm = Libri2MixDataModule(DataConfig(**data_cfg))
 
     # STFT
     stft_cfg = cfg.get("stft", {})
@@ -35,8 +53,9 @@ def _run_with_cfg(cfg: Dict[str, Any]):
     model_cfg = cfg.get("model", {})
     model = build_model(model_cfg)
 
+    # Device resolved inside Trainer
     trainer = Trainer(model=model, datamodule=dm, stft_processor=stft, cfg=cfg)
-    trainer.fit(max_epochs=int(cfg.get("max_epochs", 100)))
+    trainer.fit(max_epochs=int(cfg.get("training", {}).get("max_epochs", cfg.get("max_epochs", 100))))
 
 
 if _HAS_HYDRA:

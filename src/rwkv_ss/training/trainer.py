@@ -41,11 +41,42 @@ class Trainer:
         self.model.to(self.device)
 
     def fit(self, max_epochs: int = 100):
+        # Prepare datasets and dataloaders
         self.datamodule.setup()
         train_loader = self.datamodule.train_dataloader()
         val_loader = self.datamodule.val_dataloader()
+        # Support resume-from-checkpoint if provided in cfg
+        start_epoch = 1
+        resume_path = None
+        training_cfg = self.cfg.get("training", {}) if isinstance(self.cfg, dict) else {}
+        if training_cfg:
+            resume_path = training_cfg.get("resume_from") or self.cfg.get("resume_from_checkpoint")
 
-        for epoch in range(1, max_epochs + 1):
+        if resume_path:
+            try:
+                ckpt = torch.load(resume_path, map_location=self.device)
+                model_state = ckpt.get("model_state_dict")
+                if model_state is not None:
+                    self.model.load_state_dict(model_state)
+                opt_state = ckpt.get("optimizer_state_dict")
+                if opt_state is not None:
+                    try:
+                        self.optimizer.load_state_dict(opt_state)
+                    except Exception:
+                        pass
+                sched_state = ckpt.get("scheduler_state_dict")
+                if sched_state is not None and self.scheduler is not None:
+                    try:
+                        self.scheduler.load_state_dict(sched_state)
+                    except Exception:
+                        pass
+                ckpt_epoch = ckpt.get("epoch", None)
+                if ckpt_epoch is not None:
+                    start_epoch = int(ckpt_epoch) + 1
+            except Exception as exc:
+                print(f"Warning: failed to load resume checkpoint {resume_path}: {exc}")
+
+        for epoch in range(start_epoch, max_epochs + 1):
             train_loss = engine.train_one_epoch(
                 epoch,
                 self.model,
