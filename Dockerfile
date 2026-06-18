@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+ARG DEVICE_TYPE=cuda
 FROM python:3.10-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
@@ -20,7 +21,17 @@ COPY pyproject.toml ./
 COPY poetry.lock ./
 COPY src ./src
 
-RUN poetry install --without dev --no-interaction --no-ansi
+# Install PyTorch/torchaudio according to the build argument before Poetry
+# so Poetry doesn't need to resolve GPU-specific wheels itself. Default is
+# CUDA-enabled wheels; to force CPU use `--build-arg DEVICE_TYPE=cpu`.
+RUN if [ "${DEVICE_TYPE}" = "cpu" ]; then \
+            python -m pip install --no-cache-dir "torch" "torchaudio" -f https://download.pytorch.org/whl/cpu/torch_stable.html; \
+        else \
+            python -m pip install --no-cache-dir "torch" "torchaudio" -f https://download.pytorch.org/whl/cu118/torch_stable.html || true; \
+        fi
+
+# Install project deps via Poetry (torch already installed above)
+RUN poetry install --no-dev --no-interaction --no-ansi
 
 COPY . ./
 

@@ -8,8 +8,6 @@ packages = [{ include = "rwkv_ss", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-torch = ">=2.0"
-torchaudio = ">=2.0"
 soundfile = ">=0.12"
 numpy = ">=1.24"
 tqdm = ">=4.65"
