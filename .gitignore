@@ -1,3 +1,13 @@
+# Environments
 .venv/
-__pycache__/
+venv/
+ENV/
+
+# Python cache
+**/__pycache__/
 *.pyc
+
+# Local runtime data/weights
+artifacts/
+checkpoints/
+.pytest_cache/
