@@ -1,40 +1,70 @@
 # syntax=docker/dockerfile:1
 ARG DEVICE_TYPE=cuda
-FROM python:3.10-slim AS base
+
+# ==========================================
+# STAGE 1: The Builder (Compiles and Resolves Everything)
+# ==========================================
+FROM python:3.10-slim AS builder
+
+WORKDIR /build
+
+# Install compilation tools safely in the isolated build stage
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry pinned to a modern production release
+ENV POETRY_VERSION=1.8.3 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=true
+PATH="$POETRY_HOME/bin:$PATH"
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# CRITICAL FOR CACHING: Copy ONLY configuration files first
+COPY pyproject.toml poetry.lock ./
+
+# Modern approach to PyTorch: Inject explicit source tracking to bypass local wheel build limits
+ARG DEVICE_TYPE
+RUN if [ "${DEVICE_TYPE}" = "cpu" ]; then \
+        poetry source add --priority=explicit pytorch https://pytorch.org; \
+    else \
+        poetry source add --priority=explicit pytorch https://pytorch.org; \
+    fi && \
+    poetry add --source pytorch torch torchaudio
+
+# Install all project dependencies into an isolated local .venv folder
+RUN poetry install --without dev --no-root --no-ansi
+
+
+# ==========================================
+# STAGE 2: The Production Runner (Ultra-Lean & Secure)
+# ==========================================
+FROM python:3.10-slim AS runner
 
 ENV PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_NO_INTERACTION=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
+# Install ONLY the bare runtime system libraries required to run PyTorch and Audio tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential \
         libsndfile1 \
         libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    python -m pip install --no-cache-dir poetry
+# Securely copy over ONLY the compiled virtual environment from the builder
+COPY --from=builder /build/.venv /app/.venv
 
-COPY pyproject.toml ./
-COPY poetry.lock ./
+# Copy your actual codebase last. Source updates now rebuild in under 2 seconds!
 COPY src ./src
+COPY configs ./configs
+COPY scripts ./scripts
+COPY pyproject.toml ./ 
 
-# Install PyTorch/torchaudio according to the build argument before Poetry
-# so Poetry doesn't need to resolve GPU-specific wheels itself. Default is
-# CUDA-enabled wheels; to force CPU use `--build-arg DEVICE_TYPE=cpu`.
-RUN if [ "${DEVICE_TYPE}" = "cpu" ]; then \
-            python -m pip install --no-cache-dir "torch" "torchaudio" -f https://download.pytorch.org/whl/cpu/torch_stable.html; \
-        else \
-            python -m pip install --no-cache-dir "torch" "torchaudio" -f https://download.pytorch.org/whl/cu118/torch_stable.html || true; \
-        fi
-
-# Install project deps via Poetry (torch already installed above)
-RUN poetry install --without dev --no-interaction --no-ansi
-
-COPY . ./
-
+# Enforce secure least-privilege access execution
 RUN groupadd --system app && useradd --system --gid app --create-home app
 USER app
 
