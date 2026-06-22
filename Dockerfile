@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry pinned to a modern production release
-ENV POETRY_VERSION=1.8.3 \
+ENV POETRY_VERSION=2.4.1 \
     POETRY_HOME="/opt/poetry" \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true
@@ -36,7 +36,13 @@ COPY pyproject.toml poetry.lock ./
 #     poetry add --source pytorch torch torchaudio
 
 # Install all project dependencies into an isolated local .venv folder
-RUN poetry install --without dev --no-root --no-ansi
+ARG WITH_CUDA=true
+RUN if [ "${WITH_CUDA}" = "true" ]; then \
+        poetry install --only main --with cuda --no-root --no-ansi; \
+    else \
+        poetry install --only main --no-root --no-ansi; \
+    fi
+RUN poetry install --only main --no-root --no-ansi
 
 
 # ==========================================
@@ -55,7 +61,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build/.venv /app.venv
+COPY --from=builder /build/.venv /app/.venv
 
 # ==========================================
 # STAGE 3: The Production Runner
