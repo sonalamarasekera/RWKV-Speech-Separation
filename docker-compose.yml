@@ -1,0 +1,75 @@
+# docker-compose.yml
+#
+# Train (GPU required):
+#   docker compose up train
+#
+# Infer on CPU (works on any machine):
+#   docker compose up infer
+#
+# Infer on GPU (requires NVIDIA Container Runtime):
+#   docker compose --profile gpu up infer-gpu
+#
+# First-time setup:
+#   mkdir -p data checkpoints
+#
+# NVIDIA Container Runtime install guide:
+#   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+services:
+
+  # ── Training (GPU required) ───────────────────────────────────────────────────
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: rwkv-ss:dev
+    volumes:
+      - ./src:/app/src
+      - ./configs:/app/configs
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: >
+      python -m scripts.train
+        --config configs/experiment/baseline_tf.yaml
+    restart: "no"
+
+  # ── Inference — CPU safe (works on any machine) ───────────────────────────────
+  # No GPU reservation here. torch calls cuda.is_available() at runtime;
+  # if no GPU is present it falls back to CPU automatically.
+  # To run with GPU instead, use the infer-gpu service below.
+  infer:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: rwkv-ss:prod
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+    command: >
+      python -m scripts.infer
+        --checkpoint checkpoints/best.pt
+    restart: "no"
+
+  # ── Inference — GPU accelerated ───────────────────────────────────────────────
+  # Inherits everything from the infer service and adds the GPU reservation.
+  # Requires NVIDIA Container Runtime on the host.
+  # Usage: docker compose --profile gpu up infer-gpu
+  infer-gpu:
+    extends:
+      service: infer
+    profiles: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

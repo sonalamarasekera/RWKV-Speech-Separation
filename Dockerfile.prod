@@ -1,0 +1,64 @@
+# Dockerfile.prod — production inference image
+#
+# Build:  docker build -f Dockerfile.prod -t rwkv-ss:prod .
+# Run:    docker run --gpus all \
+#                   -v $(pwd)/data:/app/data \
+#                   -v $(pwd)/checkpoints:/app/checkpoints \
+#                   rwkv-ss:prod --checkpoint checkpoints/best.pt
+#
+# Or just: docker compose up infer
+
+# ── Stage 1: builder ──────────────────────────────────────────────────────────
+# Has build-essential to compile C extensions (pesq).
+# Nothing from this stage leaks into the final image.
+FROM python:3.10-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Isolated venv — copied as a single artifact to the final stage.
+RUN python -m venv /build/.venv
+ENV PATH="/build/.venv/bin:$PATH"
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+# ── Stage 2: runtime ──────────────────────────────────────────────────────────
+# No compiler, no build tools — only what is needed to run inference.
+FROM python:3.10-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# libsndfile1 + libgomp1 are runtime-only — no build tools needed here.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsndfile1 \
+        libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Drop in the fully-populated venv from the builder.
+COPY --from=builder /build/.venv /app/.venv
+
+# Bake source into the image (no volume mounts needed for inference).
+COPY setup.py .
+COPY src/     ./src/
+COPY configs/ ./configs/
+COPY scripts/ ./scripts/
+
+# Register the package so `import rwkv_ss` works.
+# --no-deps: dependencies are already in the venv.
+RUN pip install --no-cache-dir --no-deps .
+
+# Run as a non-root user — principle of least privilege.
+RUN groupadd --system app && useradd --system --gid app --create-home app
+USER app
+
+CMD ["python", "-m", "scripts.infer"]

@@ -1,0 +1,25 @@
+# requirements.txt
+# Install: pip install -r requirements.txt
+#
+# CUDA 12.6 libraries (nvidia-cublas-cu12, etc.) are pulled in automatically
+# as torch dependencies on Linux x86_64. No manual listing needed.
+# GPU access at runtime requires the NVIDIA Container Runtime:
+#   docker run --gpus all ...
+
+# ── Core runtime ───────────────────────────────────────────────────────────────
+soundfile==0.14.0
+numpy==2.2.6
+tqdm==4.68.2
+tensorboard==2.20.0
+
+# ── Deep learning ──────────────────────────────────────────────────────────────
+torch==2.7.1
+
+# ── Evaluation metrics ────────────────────────────────────────────────────────
+pesq==0.0.4
+pystoi==0.4.1
+scipy==1.15.3
+torchmetrics==1.9.0
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest==9.1.0
