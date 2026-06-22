@@ -21,7 +21,6 @@ ENV POETRY_VERSION=1.8.3 \
     POETRY_VIRTUALENVS_IN_PROJECT=true
     
 RUN curl -sSL https://install.python-poetry.org | python3 -
-
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
 # CRITICAL FOR CACHING: Copy ONLY configuration files first
@@ -41,9 +40,9 @@ RUN poetry install --without dev --no-root --no-ansi
 
 
 # ==========================================
-# STAGE 2: The Production Runner (Ultra-Lean & Secure)
+# STAGE 2: Interactive Development / Training Target
 # ==========================================
-FROM python:3.10-slim AS runner
+FROM python:3.10-slim AS dev
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -51,14 +50,18 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install ONLY the bare runtime system libraries required to run PyTorch and Audio tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libsndfile1 \
         libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Securely copy over ONLY the compiled virtual environment from the builder
-COPY --from=builder /build/.venv /app/.venv
+COPY --from=builder /build/.venv /app.venv
+
+# ==========================================
+# STAGE 3: The Production Runner
+# ==========================================
+
+FROM dev AS runner
 
 # Copy your actual codebase last. Source updates now rebuild in under 2 seconds!
 COPY src ./src
