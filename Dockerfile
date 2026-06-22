@@ -28,13 +28,13 @@ ENV PATH="$POETRY_HOME/bin:$PATH"
 COPY pyproject.toml poetry.lock ./
 
 # Modern approach to PyTorch: Inject explicit source tracking to bypass local wheel build limits
-ARG DEVICE_TYPE
-RUN if [ "${DEVICE_TYPE}" = "cpu" ]; then \
-        poetry source add --priority=explicit pytorch https://pytorch.org/whl/cpu; \
-    else \
-        poetry source add --priority=explicit pytorch https://pytorch.org/whl/cu121; \
-    fi && \
-    poetry add --source pytorch torch torchaudio
+# ARG DEVICE_TYPE
+# RUN if [ "${DEVICE_TYPE}" = "cpu" ]; then \
+#         poetry source add --priority=explicit pytorch https://pytorch.org/whl/cpu; \
+#     else \
+#         poetry source add --priority=explicit pytorch https://pytorch.org/whl/cu121; \
+#     fi && \
+#     poetry add --source pytorch torch torchaudio
 
 # Install all project dependencies into an isolated local .venv folder
 RUN poetry install --without dev --no-root --no-ansi
