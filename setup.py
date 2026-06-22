@@ -10,11 +10,19 @@ setup(
     # Loose bounds here — pinned versions for reproducible installs
     # live in requirements.txt, which is what Docker images use.
     install_requires=[
-        "soundfile>=0.12",
+        "argbind>=0.3.7",
+        "descript-audiotools>=0.7.2",
+        "einops",
         "numpy>=1.24",
-        "tqdm>=4.65",
+        "numba>=0.5.7",
+        "PyYAML>=6.0",
+        "soundfile>=0.12",
         "tensorboard>=2.14",
         "torch>=2.0.0",
+        "torchaudio",
+        "tqdm>=4.65",
+        "mir_eval>=0.7",
+        "flash-linear-attention",
     ],
     extras_require={
         # pip install rwkv-ss[eval]
@@ -27,6 +35,18 @@ setup(
         # pip install rwkv-ss[dev]
         "dev": [
             "pytest>=7.4",
+            "pytest-cov",
+            "pynvml",
+            "psutil",
+            "pandas",
+            "onnx",
+            "onnx-simplifier",
+            "seaborn",
+            "jupyterlab",
+            "watchdog",
+            "pesq",
+            "tabulate",
+            "encodec",
         ],
     },
 )

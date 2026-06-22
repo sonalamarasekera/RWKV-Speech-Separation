@@ -61,4 +61,4 @@ RUN pip install --no-cache-dir --no-deps .
 RUN groupadd --system app && useradd --system --gid app --create-home app
 USER app
 
-CMD ["python", "-m", "scripts.infer"]
+CMD ["python", "-m", "scripts.evaluate"]

@@ -10,10 +10,16 @@
 soundfile==0.14.0
 numpy==2.2.6
 tqdm==4.68.2
-tensorboard==2.20.0
-
+tensorboard==2.20.0argbind==0.3.7
+descript-audiotools==0.7.2
+einops==0.6.1
+numba==0.5.7
+PyYAML==6.0
+flash-linear-attention
+mir_eval>=0.7
 # ── Deep learning ──────────────────────────────────────────────────────────────
 torch==2.7.1
+torchaudio==2.7.1
 
 # ── Evaluation metrics ────────────────────────────────────────────────────────
 pesq==0.0.4
