@@ -1,7 +1,7 @@
 """Shared separation pipeline: STFT -> model -> iSTFT reconstruction."""
+
 from __future__ import annotations
 
-from typing import Tuple
 
 import torch
 import torch.nn.functional as F
@@ -9,7 +9,9 @@ import torch.nn.functional as F
 from rwkv_ss.transforms.stft import STFTProcessor
 
 
-def run_separation(mix_wav: torch.Tensor, model: torch.nn.Module, stft_processor: STFTProcessor) -> torch.Tensor:
+def run_separation(
+    mix_wav: torch.Tensor, model: torch.nn.Module, stft_processor: STFTProcessor
+) -> torch.Tensor:
     """Run STFT -> model -> iSTFT and return separated waveforms.
 
     Args:

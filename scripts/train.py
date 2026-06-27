@@ -1,15 +1,15 @@
 """Lightweight training entrypoint. Tries to use Hydra if available, otherwise falls back to a YAML config loader."""
+
 from __future__ import annotations
 
 import argparse
-import json
-import os
 import sys
 from typing import Any, Dict
 
 try:
     import hydra
     from omegaconf import DictConfig
+
     _HAS_HYDRA = True
 except Exception:
     _HAS_HYDRA = False
@@ -22,7 +22,6 @@ from rwkv_ss.data.datamodule import Libri2MixDataModule, DataConfig
 from rwkv_ss.training.trainer import Trainer
 from rwkv_ss.utils.config import resolve_and_validate
 from rwkv_ss.utils.seed import set_seed
-from rwkv_ss.utils.device import resolve_device
 
 
 def _run_with_cfg(cfg: Dict[str, Any]):
@@ -55,10 +54,15 @@ def _run_with_cfg(cfg: Dict[str, Any]):
 
     # Device resolved inside Trainer
     trainer = Trainer(model=model, datamodule=dm, stft_processor=stft, cfg=cfg)
-    trainer.fit(max_epochs=int(cfg.get("training", {}).get("max_epochs", cfg.get("max_epochs", 100))))
+    trainer.fit(
+        max_epochs=int(
+            cfg.get("training", {}).get("max_epochs", cfg.get("max_epochs", 100))
+        )
+    )
 
 
 if _HAS_HYDRA:
+
     @hydra.main(config_path=None)
     def main(cfg: DictConfig):
         _run_with_cfg(cfg)

@@ -1,19 +1,4 @@
-# docker-compose.yml
-#
-# Train (GPU required):
-#   docker compose up train
-#
-# Infer on CPU (works on any machine):
-#   docker compose up infer
-#
-# Infer on GPU (requires NVIDIA Container Runtime):
-#   docker compose --profile gpu up infer-gpu
-#
-# First-time setup:
-#   mkdir -p data checkpoints
-#
-# NVIDIA Container Runtime install guide:
-#   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+version: '3.8'
 
 services:
 
@@ -21,7 +6,8 @@ services:
   train:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile   # <--- Points to the single file
+      target: dev             # <--- Tells Docker to stop at the dev stage
     image: rwkv-ss:dev
     volumes:
       - ./src:/app/src
@@ -42,13 +28,11 @@ services:
     restart: "no"
 
   # ── Inference — CPU safe (works on any machine) ───────────────────────────────
-  # No GPU reservation here. torch calls cuda.is_available() at runtime;
-  # if no GPU is present it falls back to CPU automatically.
-  # To run with GPU instead, use the infer-gpu service below.
   infer:
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile   # <--- Points to the single file
+      target: production      # <--- Tells Docker to build the slim production stage
     image: rwkv-ss:prod
     volumes:
       - ./data:/app/data
@@ -59,9 +43,6 @@ services:
     restart: "no"
 
   # ── Inference — GPU accelerated ───────────────────────────────────────────────
-  # Inherits everything from the infer service and adds the GPU reservation.
-  # Requires NVIDIA Container Runtime on the host.
-  # Usage: docker compose --profile gpu up infer-gpu
   infer-gpu:
     extends:
       service: infer

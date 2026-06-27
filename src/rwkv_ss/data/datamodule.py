@@ -105,7 +105,9 @@ class Libri2MixDataModule:
 
     def test_dataloader(self, batch_size: int | None = None) -> DataLoader:
         if self.test_ds is None:
-            raise RuntimeError("Call setup(test_csv=...) before requesting test_dataloader().")
+            raise RuntimeError(
+                "Call setup(test_csv=...) before requesting test_dataloader()."
+            )
         cfg = self.config
         return DataLoader(
             self.test_ds,

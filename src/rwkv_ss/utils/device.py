@@ -1,4 +1,5 @@
 """Device resolution helper."""
+
 from __future__ import annotations
 
 import torch
@@ -9,10 +10,11 @@ def resolve_device(preferred: str | None = "auto") -> torch.device:
         if torch.cuda.is_available():
             return torch.device("cuda")
         try:
-            import torch.backends.mps as mps
-
             # MPS availability check
-            if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            if (
+                getattr(torch.backends, "mps", None)
+                and torch.backends.mps.is_available()
+            ):
                 return torch.device("mps")
         except Exception:
             pass

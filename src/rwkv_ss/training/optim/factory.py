@@ -1,4 +1,5 @@
 """Optimizer and scheduler factory helpers."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -6,14 +7,18 @@ from typing import Any, Dict, Optional
 import torch
 
 
-def build_optimizer(model: torch.nn.Module, cfg: Dict[str, Any]) -> torch.optim.Optimizer:
+def build_optimizer(
+    model: torch.nn.Module, cfg: Dict[str, Any]
+) -> torch.optim.Optimizer:
     params = [p for p in model.parameters() if p.requires_grad]
     lr = float(cfg.get("lr", 1e-3))
     weight_decay = float(cfg.get("weight_decay", 0.0))
     betas = tuple(cfg.get("betas", (0.9, 0.999)))
     eps = float(cfg.get("eps", 1e-8))
 
-    return torch.optim.AdamW(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
+    return torch.optim.AdamW(
+        params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay
+    )
 
 
 def build_scheduler(

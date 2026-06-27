@@ -3,6 +3,7 @@
 Set RWKV_* environment variables before importing RWKV modules.
 Provide a fail-fast checker for CUDA kernel availability.
 """
+
 from __future__ import annotations
 
 import os
@@ -30,7 +31,9 @@ def apply_default_rwkv_env(overrides: Optional[Dict[str, str]] = None) -> None:
         os.environ.setdefault(k, v)
 
 
-def apply_default_rwkv_env_and_check(overrides: Optional[Dict[str, str]] = None, require_cuda: bool = True) -> bool:
+def apply_default_rwkv_env_and_check(
+    overrides: Optional[Dict[str, str]] = None, require_cuda: bool = True
+) -> bool:
     """Apply defaults and optionally ensure CUDA RWKV kernels are available.
 
     Returns True if CUDA kernels are present (or not required), False otherwise.
@@ -48,7 +51,6 @@ def ensure_cuda_available(require_cuda: bool = True) -> bool:
     """
     try:
         # Module path mirrors where older code imported RUN_CUDA_RWKV7g
-        from RWKV.RWKV_v7.train_temp.src.model import RUN_CUDA_RWKV7g  # type: ignore
         return True
     except Exception as exc:
         if require_cuda:

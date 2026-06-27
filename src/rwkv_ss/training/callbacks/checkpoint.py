@@ -1,8 +1,8 @@
 """Simple checkpoint callback to persist training state."""
+
 from __future__ import annotations
 
 import os
-from dataclasses import asdict, is_dataclass
 from typing import Any, Dict
 
 import torch
@@ -25,13 +25,17 @@ class CheckpointCallback:
 
         # Add simple random states best-effort
         try:
-            import random, numpy as _np, torch as _torch
+            import random
+            import numpy as _np
+            import torch as _torch
 
             state_out.setdefault("random_states", {})
             state_out["random_states"]["python"] = random.getstate()
             state_out["random_states"]["numpy"] = _np.random.get_state()
             try:
-                state_out["random_states"]["torch"] = _torch.random.get_rng_state().tolist()
+                state_out["random_states"]["torch"] = (
+                    _torch.random.get_rng_state().tolist()
+                )
             except Exception:
                 state_out["random_states"]["torch"] = None
         except Exception:

@@ -1,7 +1,7 @@
 """High-level Trainer orchestrator that uses engine, optimizer factory and callbacks."""
+
 from __future__ import annotations
 
-import json
 import os
 from typing import Any, Dict, Optional
 
@@ -27,7 +27,9 @@ class Trainer:
         self.datamodule = datamodule
         self.stft_processor = stft_processor
         self.cfg = cfg
-        self.device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+        self.device = device or (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
         self.work_dir = work_dir
 
         self.optimizer = build_optimizer(self.model, cfg.get("optimizer", {}))
@@ -48,9 +50,13 @@ class Trainer:
         # Support resume-from-checkpoint if provided in cfg
         start_epoch = 1
         resume_path = None
-        training_cfg = self.cfg.get("training", {}) if isinstance(self.cfg, dict) else {}
+        training_cfg = (
+            self.cfg.get("training", {}) if isinstance(self.cfg, dict) else {}
+        )
         if training_cfg:
-            resume_path = training_cfg.get("resume_from") or self.cfg.get("resume_from_checkpoint")
+            resume_path = training_cfg.get("resume_from") or self.cfg.get(
+                "resume_from_checkpoint"
+            )
 
         if resume_path:
             try:
@@ -98,7 +104,9 @@ class Trainer:
             if self.scheduler is not None:
                 # Support ReduceLROnPlateau separately
                 try:
-                    if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    if isinstance(
+                        self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
+                    ):
                         self.scheduler.step(val_loss)
                     else:
                         self.scheduler.step()
@@ -111,7 +119,9 @@ class Trainer:
                 "epoch": epoch,
                 "model_state_dict": self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
-                "scheduler_state_dict": self.scheduler.state_dict() if self.scheduler is not None else None,
+                "scheduler_state_dict": self.scheduler.state_dict()
+                if self.scheduler is not None
+                else None,
                 "train_loss": train_loss,
                 "val_loss": val_loss,
                 "resolved_config": self.cfg,

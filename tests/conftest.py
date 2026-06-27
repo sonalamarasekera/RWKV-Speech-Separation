@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from rwkv_ss.data.datamodule import DataConfig, Libri2MixDataModule
+from rwkv_ss.data.datamodule import DataConfig
 
 
 @pytest.fixture

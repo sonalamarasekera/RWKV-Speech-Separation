@@ -1,4 +1,5 @@
 """Configuration dataclasses for RWKV v7 separator."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

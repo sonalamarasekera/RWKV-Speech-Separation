@@ -1,4 +1,5 @@
 """Minimal early stopping callback."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -19,7 +20,9 @@ class EarlyStopping:
             return False
 
         improved = (
-            metric < self.best - self.min_delta if self.mode == "min" else metric > self.best + self.min_delta
+            metric < self.best - self.min_delta
+            if self.mode == "min"
+            else metric > self.best + self.min_delta
         )
         if improved:
             self.best = metric

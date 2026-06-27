@@ -3,6 +3,7 @@
 Provides a simple `build_model(cfg)` factory that dispatches to
 registered model builders. For now, supports RWKV v7 separator.
 """
+
 from __future__ import annotations
 
 from typing import Any

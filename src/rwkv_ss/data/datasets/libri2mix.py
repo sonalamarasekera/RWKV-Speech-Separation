@@ -19,7 +19,11 @@ def load_csv_rows(csv_path: str | Path) -> list[dict[str, str]]:
     with open(csv_path, "r", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if not row.get("mix_path") or not row.get("s1_path") or not row.get("s2_path"):
+            if (
+                not row.get("mix_path")
+                or not row.get("s1_path")
+                or not row.get("s2_path")
+            ):
                 continue
             rows.append(row)
 
